@@ -1,12 +1,33 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+// Welcome to NeuroStrengths - Inclusive neurodivergent skills discovery platform
+
+import { useState } from "react";
+import { HeroSection } from "@/components/HeroSection";
+import { TypeSelection } from "@/components/TypeSelection";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
+  const [showTypeSelection, setShowTypeSelection] = useState(false);
+  const navigate = useNavigate();
+
+  const handleGetStarted = () => {
+    setShowTypeSelection(true);
+  };
+
+  const handleTypeSelect = (type: string) => {
+    navigate(`/quiz/${type}`);
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background">
+      {!showTypeSelection ? (
+        <HeroSection onGetStarted={handleGetStarted} />
+      ) : (
+        <div className="min-h-screen py-12 bg-gradient-to-br from-background via-card/20 to-background">
+          <div className="container mx-auto">
+            <TypeSelection onTypeSelect={handleTypeSelect} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

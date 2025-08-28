@@ -18,6 +18,11 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        hero: "bg-gradient-primary text-white hover:shadow-elevated transform hover:-translate-y-0.5 transition-all",
+        gamified: "bg-success text-success-foreground hover:bg-success/90 badge-glow",
+        cognitive: "bg-gradient-cognitive text-cognitive-foreground hover:shadow-card transform hover:-translate-y-0.5 transition-all",
+        sensory: "bg-gradient-sensory text-sensory-foreground hover:shadow-card transform hover:-translate-y-0.5 transition-all",
+        motor: "bg-gradient-motor text-motor-foreground hover:shadow-card transform hover:-translate-y-0.5 transition-all",
       },
       size: {
         default: "h-10 px-4 py-2",
