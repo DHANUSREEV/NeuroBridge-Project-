@@ -14,7 +14,123 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      candidate_details: {
+        Row: {
+          accessibility_preferences: Json | null
+          address: string | null
+          bio: string | null
+          created_at: string
+          current_position: string | null
+          education: string | null
+          experience_years: number | null
+          github_profile: string | null
+          id: string
+          linkedin_profile: string | null
+          phone: string | null
+          skills: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accessibility_preferences?: Json | null
+          address?: string | null
+          bio?: string | null
+          created_at?: string
+          current_position?: string | null
+          education?: string | null
+          experience_years?: number | null
+          github_profile?: string | null
+          id?: string
+          linkedin_profile?: string | null
+          phone?: string | null
+          skills?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accessibility_preferences?: Json | null
+          address?: string | null
+          bio?: string | null
+          created_at?: string
+          current_position?: string | null
+          education?: string | null
+          experience_years?: number | null
+          github_profile?: string | null
+          id?: string
+          linkedin_profile?: string | null
+          phone?: string | null
+          skills?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      manager_remarks: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          id: string
+          manager_id: string
+          rating: number | null
+          recommendation_status: string | null
+          remarks: string
+          updated_at: string
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          id?: string
+          manager_id: string
+          rating?: number | null
+          recommendation_status?: string | null
+          remarks: string
+          updated_at?: string
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          id?: string
+          manager_id?: string
+          rating?: number | null
+          recommendation_status?: string | null
+          remarks?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +139,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_role: "manager" | "candidate"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +266,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_role: ["manager", "candidate"],
+    },
   },
 } as const

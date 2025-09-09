@@ -1,13 +1,22 @@
 // Welcome to NeuroStrengths - Inclusive neurodivergent skills discovery platform
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { HeroSection } from "@/components/HeroSection";
 import { TypeSelection } from "@/components/TypeSelection";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [showTypeSelection, setShowTypeSelection] = useState(false);
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/dashboard');
+    }
+  }, [user, loading, navigate]);
 
   const handleGetStarted = () => {
     setShowTypeSelection(true);
@@ -17,12 +26,32 @@ const Index = () => {
     navigate(`/quiz/${type}`);
   };
 
+  const handleAuthRedirect = () => {
+    navigate('/auth');
+  };
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {!showTypeSelection ? (
-        <HeroSection onGetStarted={handleGetStarted} />
+        <div>
+          <div className="absolute top-4 right-4">
+            <Button onClick={handleAuthRedirect} variant="outline">
+              Sign In / Register
+            </Button>
+          </div>
+          <HeroSection onGetStarted={handleGetStarted} />
+        </div>
       ) : (
         <div className="min-h-screen py-12 bg-gradient-to-br from-background via-card/20 to-background">
+          <div className="absolute top-4 right-4">
+            <Button onClick={handleAuthRedirect} variant="outline">
+              Sign In / Register
+            </Button>
+          </div>
           <div className="container mx-auto">
             <TypeSelection onTypeSelect={handleTypeSelect} />
           </div>
