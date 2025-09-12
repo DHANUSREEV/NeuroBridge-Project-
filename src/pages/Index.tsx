@@ -23,7 +23,11 @@ const Index = () => {
   };
 
   const handleTypeSelect = (type: string) => {
-    navigate(`/quiz/${type}`);
+    if (!user) {
+      navigate('/auth');
+    } else {
+      navigate(`/quiz/${type}`);
+    }
   };
 
   const handleAuthRedirect = () => {
