@@ -1,0 +1,68 @@
+/* Accessibility CSS for dynamic theme changes */
+
+/* High Contrast Mode */
+.high-contrast {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --card: 0 0% 10%;
+  --card-foreground: 0 0% 100%;
+  --popover: 0 0% 10%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 47.9 95.8% 53.1%;
+  --primary-foreground: 0 0% 0%;
+  --secondary: 0 0% 20%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 20%;
+  --muted-foreground: 0 0% 85%;
+  --accent: 0 0% 20%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 30%;
+  --input: 0 0% 20%;
+  --ring: 47.9 95.8% 53.1%;
+}
+
+/* Reduced Motion */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Theme Variations */
+[data-theme="warm"] {
+  --primary: 24.6 95% 53.1%;
+  --primary-foreground: 60 9.1% 97.8%;
+  --accent: 36 64.3% 57.8%;
+  --accent-foreground: 60 9.1% 97.8%;
+}
+
+[data-theme="cool"] {
+  --primary: 210 40% 56%;
+  --primary-foreground: 210 40% 98%;
+  --accent: 180 25% 70%;
+  --accent-foreground: 180 25% 15%;
+}
+
+[data-theme="monochrome"] {
+  --primary: 0 0% 30%;
+  --primary-foreground: 0 0% 100%;
+  --accent: 0 0% 60%;
+  --accent-foreground: 0 0% 100%;
+  --card: 0 0% 95%;
+  --card-foreground: 0 0% 10%;
+}
+
+/* Font size utilities */
+html {
+  font-size: 16px; /* Default */
+}
+
+/* Ensure accessibility features are applied */
+.accessibility-applied {
+  transition: all 0.3s ease;
+}

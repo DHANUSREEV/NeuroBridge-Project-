@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('./styles/accessibility.css');
+
 /* Inclusive, accessible design system with calming colors and gamification elements */
 
 @layer base {

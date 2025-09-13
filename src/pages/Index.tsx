@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { HeroSection } from "@/components/HeroSection";
 import { TypeSelection } from "@/components/TypeSelection";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 
@@ -11,12 +11,17 @@ const Index = () => {
   const [showTypeSelection, setShowTypeSelection] = useState(false);
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   useEffect(() => {
     if (!loading && user) {
       navigate('/dashboard');
     }
-  }, [user, loading, navigate]);
+    // Check if we should show type selection from dashboard navigation
+    if (location.state?.showTypeSelection) {
+      setShowTypeSelection(true);
+    }
+  }, [user, loading, navigate, location.state]);
 
   const handleGetStarted = () => {
     setShowTypeSelection(true);

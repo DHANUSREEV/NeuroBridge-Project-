@@ -98,9 +98,12 @@ const CandidateDashboard = () => {
 
       if (error) throw error;
 
+      // Apply accessibility preferences immediately
+      applyAccessibilityPreferences(details.accessibility_preferences);
+
       toast({
         title: "Profile updated",
-        description: "Your details have been saved successfully.",
+        description: "Your details and accessibility preferences have been saved successfully.",
       });
     } catch (error: any) {
       toast({
@@ -112,6 +115,42 @@ const CandidateDashboard = () => {
       setLoading(false);
     }
   };
+
+  // Apply accessibility preferences to the DOM
+  const applyAccessibilityPreferences = (prefs: any) => {
+    const root = document.documentElement;
+    
+    // Apply font size
+    if (prefs.fontSize) {
+      root.style.fontSize = `${prefs.fontSize}px`;
+    }
+    
+    // Apply high contrast mode
+    if (prefs.highContrast) {
+      root.classList.add('high-contrast');
+    } else {
+      root.classList.remove('high-contrast');
+    }
+    
+    // Apply reduced motion
+    if (prefs.reducedMotion) {
+      root.classList.add('reduce-motion');
+    } else {
+      root.classList.remove('reduce-motion');
+    }
+    
+    // Apply color theme
+    if (prefs.colorTheme) {
+      root.setAttribute('data-theme', prefs.colorTheme);
+    }
+  };
+
+  // Apply accessibility preferences on component mount
+  useEffect(() => {
+    if (details.accessibility_preferences) {
+      applyAccessibilityPreferences(details.accessibility_preferences);
+    }
+  }, [details.accessibility_preferences]);
 
   const handleSkillsChange = (value: string) => {
     const skillsArray = value.split(',').map(skill => skill.trim()).filter(Boolean);
@@ -155,7 +194,10 @@ const CandidateDashboard = () => {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/')}>
+        <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => {
+          // Navigate to home page type selection
+          navigate('/', { state: { showTypeSelection: true } });
+        }}>
           <CardContent className="p-4 text-center">
             <Brain className="h-8 w-8 text-primary mx-auto mb-2" />
             <h3 className="font-semibold mb-1">Take Quiz</h3>
@@ -163,7 +205,10 @@ const CandidateDashboard = () => {
           </CardContent>
         </Card>
         
-        <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/results/cognitive')}>
+        <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => {
+          // Navigate to resume builder with a sample quiz type
+          navigate('/quiz/cognitive', { state: { fromDashboard: true } });
+        }}>
           <CardContent className="p-4 text-center">
             <FileText className="h-8 w-8 text-primary mx-auto mb-2" />
             <h3 className="font-semibold mb-1">Resume Builder</h3>
