@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,12 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+
+  // Get navigation message and redirect path from location state
+  const navigationMessage = location.state?.message;
+  const redirectTo = location.state?.redirectTo;
 
   const [signInData, setSignInData] = useState({
     email: '',
@@ -46,7 +51,8 @@ const Auth = () => {
         title: "Welcome back!",
         description: "You have been signed in successfully.",
       });
-      navigate('/dashboard');
+      // Navigate to intended destination or dashboard
+      navigate(redirectTo || '/dashboard');
     }
     
     setIsLoading(false);
@@ -90,6 +96,15 @@ const Auth = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Navigation Message */}
+          {navigationMessage && (
+            <div className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+              <p className="text-sm text-muted-foreground text-center">
+                {navigationMessage}
+              </p>
+            </div>
+          )}
+          
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign In</TabsTrigger>

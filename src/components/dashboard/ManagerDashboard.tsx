@@ -178,7 +178,7 @@ const ManagerDashboard = () => {
           <div>
             <h1 className="text-3xl font-bold">Manager Dashboard</h1>
             <p className="text-muted-foreground">
-              Welcome back, {profile?.first_name || 'Manager'}!
+              Welcome back, {profile?.first_name || 'Manager'}! Here you can monitor candidate progress, review quiz results, and access reports. Use the Reports section to generate and send detailed performance summaries to the data team or head office for further analysis and decision-making.
             </p>
           </div>
         </div>

@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, User, Save, Settings, LogOut } from 'lucide-react';
+import { Loader2, User, Save, Settings, LogOut, Brain, FileText, BookOpen, Target } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import AccessibilitySettings from '@/components/dashboard/AccessibilitySettings';
 
 interface CandidateDetails {
@@ -26,6 +27,7 @@ interface CandidateDetails {
 const CandidateDashboard = () => {
   const { user, profile, signOut } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [showAccessibility, setShowAccessibility] = useState(false);
   const [details, setDetails] = useState<CandidateDetails>({
@@ -150,6 +152,41 @@ const CandidateDashboard = () => {
           onUpdate={(prefs) => setDetails({ ...details, accessibility_preferences: prefs })}
         />
       )}
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/')}>
+          <CardContent className="p-4 text-center">
+            <Brain className="h-8 w-8 text-primary mx-auto mb-2" />
+            <h3 className="font-semibold mb-1">Take Quiz</h3>
+            <p className="text-sm text-muted-foreground">Start your skill assessment</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/results/cognitive')}>
+          <CardContent className="p-4 text-center">
+            <FileText className="h-8 w-8 text-primary mx-auto mb-2" />
+            <h3 className="font-semibold mb-1">Resume Builder</h3>
+            <p className="text-sm text-muted-foreground">Generate professional resume</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="hover:shadow-md transition-shadow cursor-pointer">
+          <CardContent className="p-4 text-center">
+            <BookOpen className="h-8 w-8 text-primary mx-auto mb-2" />
+            <h3 className="font-semibold mb-1">Mental Health</h3>
+            <p className="text-sm text-muted-foreground">Wellness resources & tools</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="hover:shadow-md transition-shadow cursor-pointer">
+          <CardContent className="p-4 text-center">
+            <Target className="h-8 w-8 text-primary mx-auto mb-2" />
+            <h3 className="font-semibold mb-1">Progress Tracker</h3>
+            <p className="text-sm text-muted-foreground">View your achievements</p>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Profile Form */}
       <Card>

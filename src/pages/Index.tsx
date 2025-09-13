@@ -24,7 +24,13 @@ const Index = () => {
 
   const handleTypeSelect = (type: string) => {
     if (!user) {
-      navigate('/auth');
+      // Show navigation prompt for authentication
+      navigate('/auth', { 
+        state: { 
+          message: "Please log in to access your personalized dashboard. Once logged in, you can view and attempt your quizzes, track your progress, and access support tools designed to enhance your learning experience.",
+          redirectTo: `/quiz/${type}`
+        }
+      });
     } else {
       navigate(`/quiz/${type}`);
     }
