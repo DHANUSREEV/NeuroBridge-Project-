@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Star, Trophy, CheckCircle, Loader2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { questionBank } from "@/data/questionBank";
 
 export default function Quiz() {
@@ -19,6 +20,29 @@ export default function Quiz() {
       navigate('/auth');
     }
   }, [user, loading, navigate]);
+
+  // Save quiz results when quiz completes
+  const saveQuizResult = async (quizData: any) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('quiz_results')
+        .insert({
+          user_id: user.id,
+          quiz_type: type!,
+          domain_id: quizData.domain.id,
+          score: quizData.score,
+          total_questions: quizData.totalQuestions,
+          percentage: Math.round((quizData.score / quizData.totalQuestions) * 100),
+          answers: quizData.answers
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error saving quiz result:', error);
+    }
+  };
 
   if (loading) {
     return (
@@ -94,6 +118,10 @@ export default function Quiz() {
       answers: userAnswers,
       questions: selectedDomainData?.questions || []
     };
+    
+    // Save quiz result
+    saveQuizResult(results);
+    
     navigate(`/results/${type}`, { state: results });
   };
 

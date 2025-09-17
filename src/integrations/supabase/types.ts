@@ -27,6 +27,7 @@ export type Database = {
           id: string
           linkedin_profile: string | null
           phone: string | null
+          profile_completed: boolean | null
           skills: string[] | null
           updated_at: string
           user_id: string
@@ -43,6 +44,7 @@ export type Database = {
           id?: string
           linkedin_profile?: string | null
           phone?: string | null
+          profile_completed?: boolean | null
           skills?: string[] | null
           updated_at?: string
           user_id: string
@@ -59,8 +61,33 @@ export type Database = {
           id?: string
           linkedin_profile?: string | null
           phone?: string | null
+          profile_completed?: boolean | null
           skills?: string[] | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      generated_resumes: {
+        Row: {
+          created_at: string
+          generated_at: string
+          id: string
+          resume_data: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          generated_at?: string
+          id?: string
+          resume_data: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          generated_at?: string
+          id?: string
+          resume_data?: Json
           user_id?: string
         }
         Relationships: []
@@ -127,6 +154,45 @@ export type Database = {
           last_name?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      quiz_results: {
+        Row: {
+          answers: Json
+          completed_at: string
+          created_at: string
+          domain_id: string
+          id: string
+          percentage: number
+          quiz_type: string
+          score: number
+          total_questions: number
+          user_id: string
+        }
+        Insert: {
+          answers: Json
+          completed_at?: string
+          created_at?: string
+          domain_id: string
+          id?: string
+          percentage: number
+          quiz_type: string
+          score: number
+          total_questions: number
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          completed_at?: string
+          created_at?: string
+          domain_id?: string
+          id?: string
+          percentage?: number
+          quiz_type?: string
+          score?: number
+          total_questions?: number
           user_id?: string
         }
         Relationships: []

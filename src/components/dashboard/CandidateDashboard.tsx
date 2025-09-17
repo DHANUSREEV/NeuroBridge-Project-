@@ -6,9 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, User, Save, Settings, LogOut, Brain, FileText, BookOpen, Target } from 'lucide-react';
+import { Loader2, User, Settings, LogOut, BarChart3, Trophy, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import ProfileCompletionFlow from '@/components/dashboard/ProfileCompletionFlow';
+import EnhancedQuizSection from '@/components/dashboard/EnhancedQuizSection';
+import ResumeGenerator from '@/components/dashboard/ResumeGenerator';
 import AccessibilitySettings from '@/components/dashboard/AccessibilitySettings';
 
 interface CandidateDetails {
@@ -28,8 +32,10 @@ const CandidateDashboard = () => {
   const { user, profile, signOut } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [showAccessibility, setShowAccessibility] = useState(false);
+  const [profileCompleted, setProfileCompleted] = useState(false);
+  const [quizResults, setQuizResults] = useState([]);
   const [details, setDetails] = useState<CandidateDetails>({
     phone: '',
     address: '',
@@ -44,76 +50,71 @@ const CandidateDashboard = () => {
   });
 
   useEffect(() => {
-    fetchCandidateDetails();
+    checkProfileCompletion();
   }, [user]);
 
-  const fetchCandidateDetails = async () => {
+  const checkProfileCompletion = async () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('candidate_details')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
+      const [detailsResponse, quizResponse] = await Promise.all([
+        supabase
+          .from('candidate_details')
+          .select('*')
+          .eq('user_id', user.id)
+          .single(),
+        supabase
+          .from('quiz_results')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('completed_at', { ascending: false })
+      ]);
 
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
-
-      if (data) {
+      if (detailsResponse.data) {
         setDetails({
-          phone: data.phone || '',
-          address: data.address || '',
-          skills: data.skills || [],
-          experience_years: data.experience_years,
-          education: data.education || '',
-          current_position: data.current_position || '',
-          linkedin_profile: data.linkedin_profile || '',
-          github_profile: data.github_profile || '',
-          bio: data.bio || '',
-          accessibility_preferences: data.accessibility_preferences || {},
+          phone: detailsResponse.data.phone || '',
+          address: detailsResponse.data.address || '',
+          skills: detailsResponse.data.skills || [],
+          experience_years: detailsResponse.data.experience_years,
+          education: detailsResponse.data.education || '',
+          current_position: detailsResponse.data.current_position || '',
+          linkedin_profile: detailsResponse.data.linkedin_profile || '',
+          github_profile: detailsResponse.data.github_profile || '',
+          bio: detailsResponse.data.bio || '',
+          accessibility_preferences: detailsResponse.data.accessibility_preferences || {},
         });
+
+        setProfileCompleted(detailsResponse.data.profile_completed || false);
+
+        // Apply accessibility preferences
+        if (detailsResponse.data.accessibility_preferences) {
+          applyAccessibilityPreferences(detailsResponse.data.accessibility_preferences);
+        }
+      }
+
+      if (quizResponse.data) {
+        setQuizResults(quizResponse.data);
       }
     } catch (error: any) {
-      toast({
-        title: "Error fetching details",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleSave = async () => {
-    if (!user) return;
-    
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('candidate_details')
-        .upsert({
-          user_id: user.id,
-          ...details,
+      if (error.code !== 'PGRST116') {
+        toast({
+          title: "Error fetching details",
+          description: error.message,
+          variant: "destructive",
         });
-
-      if (error) throw error;
-
-      // Apply accessibility preferences immediately
-      applyAccessibilityPreferences(details.accessibility_preferences);
-
-      toast({
-        title: "Profile updated",
-        description: "Your details and accessibility preferences have been saved successfully.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error saving details",
-        description: error.message,
-        variant: "destructive",
-      });
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleProfileComplete = () => {
+    setProfileCompleted(true);
+    checkProfileCompletion(); // Refresh data
+    toast({
+      title: "Welcome to your dashboard!",
+      description: "Your profile is complete. You can now access all features.",
+    });
   };
 
   // Apply accessibility preferences to the DOM
@@ -145,210 +146,267 @@ const CandidateDashboard = () => {
     }
   };
 
-  // Apply accessibility preferences on component mount
-  useEffect(() => {
-    if (details.accessibility_preferences) {
-      applyAccessibilityPreferences(details.accessibility_preferences);
-    }
-  }, [details.accessibility_preferences]);
-
   const handleSkillsChange = (value: string) => {
     const skillsArray = value.split(',').map(skill => skill.trim()).filter(Boolean);
     setDetails({ ...details, skills: skillsArray });
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  // Show profile completion flow if profile is not completed
+  if (!profileCompleted) {
+    return <ProfileCompletionFlow onComplete={handleProfileComplete} />;
+  }
+
+  const getProgressStats = () => {
+    const totalQuizzes = 6; // Based on available quiz types
+    const completedQuizzes = quizResults.length;
+    const averageScore = quizResults.length > 0 
+      ? Math.round(quizResults.reduce((sum: number, result: any) => sum + result.percentage, 0) / quizResults.length)
+      : 0;
+    
+    return {
+      completedQuizzes,
+      totalQuizzes,
+      averageScore,
+      progressPercentage: Math.round((completedQuizzes / totalQuizzes) * 100)
+    };
+  };
+
+  const stats = getProgressStats();
+
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-3">
-          <User className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold">Candidate Dashboard</h1>
-            <p className="text-muted-foreground">
-              Welcome back, {profile?.first_name || 'Candidate'}!
-            </p>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-card/30">
+      <div className="container mx-auto p-6 max-w-6xl">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-3">
+            <User className="h-8 w-8 text-primary" />
+            <div>
+              <h1 className="text-3xl font-bold">Welcome back, {profile?.first_name}!</h1>
+              <p className="text-muted-foreground">
+                Your neurodivergent-friendly career development dashboard
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowAccessibility(!showAccessibility)}
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Accessibility
+            </Button>
+            <Button variant="outline" onClick={signOut}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setShowAccessibility(!showAccessibility)}
-          >
-            <Settings className="h-4 w-4 mr-2" />
-            Accessibility
-          </Button>
-          <Button variant="outline" onClick={signOut}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign Out
-          </Button>
+
+        {/* Accessibility Settings */}
+        {showAccessibility && (
+          <div className="mb-6">
+            <AccessibilitySettings 
+              preferences={details.accessibility_preferences}
+              onUpdate={(prefs) => setDetails({ ...details, accessibility_preferences: prefs })}
+            />
+          </div>
+        )}
+
+        {/* Progress Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <Card>
+            <CardContent className="p-4 text-center">
+              <BarChart3 className="h-8 w-8 text-primary mx-auto mb-2" />
+              <div className="text-2xl font-bold">{stats.progressPercentage}%</div>
+              <p className="text-sm text-muted-foreground">Overall Progress</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4 text-center">
+              <Trophy className="h-8 w-8 text-success mx-auto mb-2" />
+              <div className="text-2xl font-bold">{stats.completedQuizzes}</div>
+              <p className="text-sm text-muted-foreground">Quizzes Completed</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4 text-center">
+              <FileText className="h-8 w-8 text-warning mx-auto mb-2" />
+              <div className="text-2xl font-bold">{stats.averageScore}%</div>
+              <p className="text-sm text-muted-foreground">Average Score</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4 text-center">
+              <User className="h-8 w-8 text-info mx-auto mb-2" />
+              <div className="text-2xl font-bold">✓</div>
+              <p className="text-sm text-muted-foreground">Profile Complete</p>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Main Dashboard Tabs */}
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="quizzes">Quizzes</TabsTrigger>
+            <TabsTrigger value="resume">Resume</TabsTrigger>
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="overview" className="space-y-6 mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Your Journey</CardTitle>
+                <CardDescription>
+                  Track your progress and see recommended next steps
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span>Quiz Completion</span>
+                      <span>{stats.completedQuizzes}/{stats.totalQuizzes} completed</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div 
+                        className="bg-primary h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${stats.progressPercentage}%` }}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                    <div className="p-4 rounded-lg bg-muted/50">
+                      <h4 className="font-medium mb-2">Next Recommended Step</h4>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        {stats.completedQuizzes === 0 
+                          ? "Take your first technical skills assessment"
+                          : stats.completedQuizzes < 3
+                          ? "Continue with soft skills evaluations"
+                          : "Generate your professional resume"
+                        }
+                      </p>
+                      <Button size="sm" onClick={() => {
+                        if (stats.completedQuizzes < 3) {
+                          // Switch to quizzes tab
+                          (document.querySelector('[value="quizzes"]') as HTMLElement)?.click();
+                        } else {
+                          // Switch to resume tab
+                          (document.querySelector('[value="resume"]') as HTMLElement)?.click();
+                        }
+                      }}>
+                        {stats.completedQuizzes < 3 ? "Take Quiz" : "Generate Resume"}
+                      </Button>
+                    </div>
+                    
+                    <div className="p-4 rounded-lg bg-muted/50">
+                      <h4 className="font-medium mb-2">Recent Achievement</h4>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        {quizResults.length > 0 
+                          ? `Latest quiz: ${(quizResults[0] as any).percentage}% in ${(quizResults[0] as any).quiz_type}`
+                          : "Complete your first quiz to earn achievements"
+                        }
+                      </p>
+                      <Button size="sm" variant="outline" disabled={quizResults.length === 0}>
+                        View Details
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="quizzes" className="mt-6">
+            <EnhancedQuizSection />
+          </TabsContent>
+          
+          <TabsContent value="resume" className="mt-6">
+            <ResumeGenerator />
+          </TabsContent>
+          
+          <TabsContent value="profile" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Profile Settings</CardTitle>
+                <CardDescription>
+                  Update your professional information and preferences
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone</Label>
+                    <Input
+                      id="phone"
+                      value={details.phone}
+                      onChange={(e) => setDetails({ ...details, phone: e.target.value })}
+                      placeholder="Your phone number"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="experience">Years of Experience</Label>
+                    <Input
+                      id="experience"
+                      type="number"
+                      value={details.experience_years || ''}
+                      onChange={(e) => setDetails({ 
+                        ...details, 
+                        experience_years: e.target.value ? parseInt(e.target.value) : null 
+                      })}
+                      placeholder="Years of professional experience"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="current_position">Current Position</Label>
+                  <Input
+                    id="current_position"
+                    value={details.current_position}
+                    onChange={(e) => setDetails({ ...details, current_position: e.target.value })}
+                    placeholder="Your current job title"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="skills">Skills (comma-separated)</Label>
+                  <Textarea
+                    id="skills"
+                    value={details.skills.join(', ')}
+                    onChange={(e) => handleSkillsChange(e.target.value)}
+                    placeholder="React, TypeScript, Node.js, Python, etc."
+                    rows={3}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="bio">Professional Bio</Label>
+                  <Textarea
+                    id="bio"
+                    value={details.bio}
+                    onChange={(e) => setDetails({ ...details, bio: e.target.value })}
+                    placeholder="Tell us about yourself, your strengths, and what makes you unique..."
+                    rows={4}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
-
-      {showAccessibility && (
-        <AccessibilitySettings 
-          preferences={details.accessibility_preferences}
-          onUpdate={(prefs) => setDetails({ ...details, accessibility_preferences: prefs })}
-        />
-      )}
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => {
-          // Navigate to home page type selection
-          navigate('/', { state: { showTypeSelection: true } });
-        }}>
-          <CardContent className="p-4 text-center">
-            <Brain className="h-8 w-8 text-primary mx-auto mb-2" />
-            <h3 className="font-semibold mb-1">Take Quiz</h3>
-            <p className="text-sm text-muted-foreground">Start your skill assessment</p>
-          </CardContent>
-        </Card>
-        
-        <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => {
-          // Navigate to resume builder with a sample quiz type
-          navigate('/quiz/cognitive', { state: { fromDashboard: true } });
-        }}>
-          <CardContent className="p-4 text-center">
-            <FileText className="h-8 w-8 text-primary mx-auto mb-2" />
-            <h3 className="font-semibold mb-1">Resume Builder</h3>
-            <p className="text-sm text-muted-foreground">Generate professional resume</p>
-          </CardContent>
-        </Card>
-        
-        <Card className="hover:shadow-md transition-shadow cursor-pointer">
-          <CardContent className="p-4 text-center">
-            <BookOpen className="h-8 w-8 text-primary mx-auto mb-2" />
-            <h3 className="font-semibold mb-1">Mental Health</h3>
-            <p className="text-sm text-muted-foreground">Wellness resources & tools</p>
-          </CardContent>
-        </Card>
-        
-        <Card className="hover:shadow-md transition-shadow cursor-pointer">
-          <CardContent className="p-4 text-center">
-            <Target className="h-8 w-8 text-primary mx-auto mb-2" />
-            <h3 className="font-semibold mb-1">Progress Tracker</h3>
-            <p className="text-sm text-muted-foreground">View your achievements</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Profile Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Professional Profile</CardTitle>
-          <CardDescription>
-            Update your personal and professional information to help managers understand your strengths and experience.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                value={details.phone}
-                onChange={(e) => setDetails({ ...details, phone: e.target.value })}
-                placeholder="Your phone number"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="experience">Years of Experience</Label>
-              <Input
-                id="experience"
-                type="number"
-                value={details.experience_years || ''}
-                onChange={(e) => setDetails({ 
-                  ...details, 
-                  experience_years: e.target.value ? parseInt(e.target.value) : null 
-                })}
-                placeholder="Years of professional experience"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="address">Address</Label>
-            <Textarea
-              id="address"
-              value={details.address}
-              onChange={(e) => setDetails({ ...details, address: e.target.value })}
-              placeholder="Your address"
-              rows={2}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="current_position">Current Position</Label>
-            <Input
-              id="current_position"
-              value={details.current_position}
-              onChange={(e) => setDetails({ ...details, current_position: e.target.value })}
-              placeholder="Your current job title"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="education">Education</Label>
-            <Textarea
-              id="education"
-              value={details.education}
-              onChange={(e) => setDetails({ ...details, education: e.target.value })}
-              placeholder="Your educational background"
-              rows={3}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="skills">Skills (comma-separated)</Label>
-            <Textarea
-              id="skills"
-              value={details.skills.join(', ')}
-              onChange={(e) => handleSkillsChange(e.target.value)}
-              placeholder="React, TypeScript, Node.js, Python, etc."
-              rows={3}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="linkedin">LinkedIn Profile</Label>
-              <Input
-                id="linkedin"
-                value={details.linkedin_profile}
-                onChange={(e) => setDetails({ ...details, linkedin_profile: e.target.value })}
-                placeholder="https://linkedin.com/in/yourprofile"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="github">GitHub Profile</Label>
-              <Input
-                id="github"
-                value={details.github_profile}
-                onChange={(e) => setDetails({ ...details, github_profile: e.target.value })}
-                placeholder="https://github.com/yourusername"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="bio">Professional Bio</Label>
-            <Textarea
-              id="bio"
-              value={details.bio}
-              onChange={(e) => setDetails({ ...details, bio: e.target.value })}
-              placeholder="Tell us about yourself, your strengths, and what makes you unique..."
-              rows={4}
-            />
-          </div>
-
-          <Button onClick={handleSave} disabled={loading} className="w-full">
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            <Save className="mr-2 h-4 w-4" />
-            Save Profile
-          </Button>
-        </CardContent>
-      </Card>
     </div>
   );
 };
