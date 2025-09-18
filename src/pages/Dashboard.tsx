@@ -10,8 +10,10 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log('Dashboard - Auth State:', { loading, user: !!user, profile: !!profile });
     if (!loading && !user) {
-      navigate('/auth');
+      console.log('Redirecting to /auth - no user found');
+      navigate('/auth', { replace: true });
     }
   }, [user, loading, navigate]);
 
