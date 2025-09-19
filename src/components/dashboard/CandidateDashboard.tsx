@@ -150,6 +150,44 @@ const CandidateDashboard = () => {
     setDetails({ ...details, skills: skillsArray });
   };
 
+  // Handle accessibility settings updates
+  const handleAccessibilityUpdate = async (prefs: any) => {
+    // Update local state
+    const updatedDetails = { ...details, accessibility_preferences: prefs };
+    setDetails(updatedDetails);
+    
+    // Apply preferences to DOM immediately
+    applyAccessibilityPreferences(prefs);
+    
+    // Save to database
+    try {
+      const { error } = await supabase
+        .from('candidate_details')
+        .upsert({
+          user_id: user!.id,
+          accessibility_preferences: prefs,
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (error) {
+        console.error('Error saving accessibility preferences:', error);
+        toast({
+          title: "Error saving preferences",
+          description: "Your accessibility settings couldn't be saved. Please try again.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Settings saved",
+          description: "Your accessibility preferences have been updated.",
+        });
+      }
+    } catch (error: any) {
+      console.error('Error saving accessibility preferences:', error);
+    }
+  };
+
   const saveProfileDetails = async () => {
     if (!user) return;
 
@@ -531,7 +569,7 @@ const CandidateDashboard = () => {
             <CardContent>
               <AccessibilitySettings 
                 preferences={details.accessibility_preferences}
-                onUpdate={(prefs) => setDetails({ ...details, accessibility_preferences: prefs })}
+                onUpdate={handleAccessibilityUpdate}
               />
               <div className="mt-6">
                 <Button onClick={() => setActiveSection('home')} variant="outline">
