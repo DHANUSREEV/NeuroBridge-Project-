@@ -167,6 +167,8 @@ const ProfileCompletionFlow: React.FC<ProfileCompletionFlowProps> = ({ onComplet
           user_id: user!.id,
           ...details,
           profile_completed: true,
+        }, {
+          onConflict: 'user_id'
         });
 
       if (error) throw error;
