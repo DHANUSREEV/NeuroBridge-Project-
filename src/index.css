@@ -1,8 +1,9 @@
+@import url('./styles/accessibility.css');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('./styles/accessibility.css');
+
 
 /* Inclusive, accessible design system with calming colors and gamification elements */
 
@@ -19,32 +20,29 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 20% 15%;
 
-    /* Gamification colors - calming yet engaging */
-    --primary: 210 80% 60%;  /* Calming blue for main actions */
+    /* Gamification colors */
+    --primary: 210 80% 60%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 160 60% 85%;  /* Soft mint for secondary actions */
+    --secondary: 160 60% 85%;
     --secondary-foreground: 160 60% 20%;
 
     --muted: 240 10% 95%;
     --muted-foreground: 240 10% 45%;
 
-    --accent: 280 60% 80%;  /* Gentle purple for highlights */
+    --accent: 280 60% 80%;
     --accent-foreground: 280 60% 25%;
 
-    /* Success and achievement colors */
+    /* Success and categories */
     --success: 120 60% 70%;
     --success-foreground: 120 60% 15%;
 
-    /* Cognitive category - warm blue */
     --cognitive: 200 70% 75%;
     --cognitive-foreground: 200 70% 20%;
 
-    /* Sensory category - calming green */
     --sensory: 150 50% 70%;
     --sensory-foreground: 150 50% 20%;
 
-    /* Motor category - energizing orange */
     --motor: 30 70% 75%;
     --motor-foreground: 30 70% 20%;
 
@@ -57,24 +55,40 @@
 
     --radius: 1rem;
 
-    /* Gamification gradients */
+    /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(210, 80%, 60%), hsl(220, 70%, 70%));
     --gradient-success: linear-gradient(135deg, hsl(120, 60%, 70%), hsl(140, 50%, 75%));
     --gradient-cognitive: linear-gradient(135deg, hsl(200, 70%, 75%), hsl(210, 60%, 80%));
     --gradient-sensory: linear-gradient(135deg, hsl(150, 50%, 70%), hsl(160, 45%, 75%));
     --gradient-motor: linear-gradient(135deg, hsl(30, 70%, 75%), hsl(40, 65%, 80%));
 
-    /* Accessibility shadows */
+    /* Shadows */
     --shadow-card: 0 2px 8px hsl(240, 20%, 80%);
     --shadow-elevated: 0 4px 16px hsl(240, 20%, 75%);
 
-    /* Animation durations for accessibility */
+    /* Animations */
     --duration-fast: 150ms;
     --duration-normal: 300ms;
     --duration-slow: 500ms;
 
     /* Dyslexia-friendly spacing */
     --spacing-comfortable: 1.6;
+
+    /* Accessibility custom colors */
+    --accessibility-blue: 221 83% 53%;
+    --accessibility-green: 142 76% 36%;
+    --accessibility-gray: 220 9% 46%;
+    --tips-background: 220 13% 95%;
+
+    /* Sidebar variables */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
@@ -117,6 +131,20 @@
     --border: 240 15% 20%;
     --input: 240 15% 18%;
     --ring: 210 70% 65%;
+
+    /* Dark mode accessibility colors */
+    --accessibility-blue: 221 83% 53%;
+    --accessibility-green: 142 76% 46%;
+    --accessibility-gray: 220 9% 65%;
+    --tips-background: 220 13% 10%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -133,9 +161,7 @@
 
   /* Accessibility improvements */
   @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
+    * {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
@@ -143,12 +169,12 @@
     }
   }
 
-  /* Focus styles for accessibility */
+  /* Focus styles */
   *:focus-visible {
     @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
   }
 
-  /* High contrast mode support */
+  /* High contrast mode */
   @media (prefers-contrast: high) {
     :root {
       --border: 240 100% 20%;
@@ -157,8 +183,8 @@
   }
 }
 
+/* Components */
 @layer components {
-  /* Gamification components */
   .badge-glow {
     animation: badge-glow 2s ease-in-out infinite alternate;
   }
@@ -172,8 +198,8 @@
   }
 }
 
+/* Utilities & animations */
 @layer utilities {
-  /* Gamification animations */
   @keyframes badge-glow {
     from {
       box-shadow: 0 0 5px hsl(var(--success));
@@ -207,4 +233,39 @@
   .animate-level-up {
     animation: level-up 0.6s ease-in-out;
   }
+}
+
+/* Extra Accessibility Themes */
+.high-contrast {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --card: 0 0% 0%;
+  --card-foreground: 0 0% 100%;
+  --border: 0 0% 100%;
+}
+
+.reduce-motion * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+.enhanced-keyboard *:focus-visible {
+  outline: 3px solid hsl(var(--accessibility-blue));
+  outline-offset: 2px;
+}
+
+.theme-monochrome {
+  filter: grayscale(100%);
+}
+
+.theme-high-contrast {
+  --primary: 0 0% 100%;
+  --primary-foreground: 0 0% 0%;
+  --secondary: 0 0% 0%;
+  --secondary-foreground: 0 0% 100%;
+  --accent: 0 0% 100%;
+  --accent-foreground: 0 0% 0%;
+  --muted: 0 0% 20%;
+  --muted-foreground: 0 0% 100%;
 }

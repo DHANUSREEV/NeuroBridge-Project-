@@ -94,7 +94,9 @@ export function HeroSection({ onGetStarted }: HeroSectionProps) {
               Your uniqueness
             </span>
             <br />
-            <span className="text-foreground">is your</span>
+            <span style={{ fontSize: '4rem', fontWeight: 'bold', color: 'black' }}>
+              is your
+            </span>
             <br />
             <span className="bg-gradient-success bg-clip-text text-transparent">
               strength

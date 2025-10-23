@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -10,6 +10,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { questionBank } from "@/data/questionBank";
 
+// Add these global declarations for TypeScript
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
+
 export default function Quiz() {
   const { type } = useParams();
   const navigate = useNavigate();
@@ -17,30 +25,30 @@ export default function Quiz() {
 
   useEffect(() => {
     if (!loading && !user) {
-      navigate('/auth');
+      navigate("/auth");
     }
   }, [user, loading, navigate]);
 
   // Save quiz results when quiz completes
   const saveQuizResult = async (quizData: any) => {
     if (!user) return;
-    
     try {
       const { error } = await supabase
-        .from('quiz_results')
+        .from("quiz_results")
         .insert({
           user_id: user.id,
           quiz_type: type!,
           domain_id: quizData.domain.id,
           score: quizData.score,
           total_questions: quizData.totalQuestions,
-          percentage: Math.round((quizData.score / quizData.totalQuestions) * 100),
-          answers: quizData.answers
+          percentage: Math.round(
+            (quizData.score / quizData.totalQuestions) * 100
+          ),
+          answers: quizData.answers,
         });
-
       if (error) throw error;
     } catch (error) {
-      console.error('Error saving quiz result:', error);
+      console.error("Error saving quiz result:", error);
     }
   };
 
@@ -55,29 +63,29 @@ export default function Quiz() {
   if (!user) {
     return null;
   }
-  
+
   // Quiz state management
-  const [currentStep, setCurrentStep] = useState<'domain-selection' | 'quiz' | 'results'>('domain-selection');
+  const [currentStep, setCurrentStep] = useState<
+    "domain-selection" | "quiz" | "results"
+  >("domain-selection");
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [userAnswers, setUserAnswers] = useState<number[]>([]);
   const [quizComplete, setQuizComplete] = useState(false);
 
   const neuroType = questionBank[type as keyof typeof questionBank];
-  
   if (!neuroType) {
-    navigate('/404');
+    navigate("/404");
     return null;
   }
-
-  const selectedDomainData = selectedDomain 
-    ? neuroType.domains.find(d => d.id === selectedDomain)
+  const selectedDomainData = selectedDomain
+    ? neuroType.domains.find((d) => d.id === selectedDomain)
     : null;
 
   // Domain selection handlers
   const handleDomainSelect = (domainId: string) => {
     setSelectedDomain(domainId);
-    setCurrentStep('quiz');
+    setCurrentStep("quiz");
   };
 
   // Quiz handlers
@@ -88,7 +96,7 @@ export default function Quiz() {
     if (currentQuestion === selectedDomainData!.questions.length - 1) {
       // Quiz complete, show results
       setQuizComplete(true);
-      setCurrentStep('results');
+      setCurrentStep("results");
     } else {
       setCurrentQuestion(currentQuestion + 1);
     }
@@ -97,12 +105,14 @@ export default function Quiz() {
   const calculateScore = () => {
     if (!selectedDomainData) return 0;
     return userAnswers.reduce((score, answer, index) => {
-      return answer === selectedDomainData.questions[index].correctAnswer ? score + 1 : score;
+      return answer === selectedDomainData.questions[index].correctAnswer
+        ? score + 1
+        : score;
     }, 0);
   };
 
   const handleRetakeQuiz = () => {
-    setCurrentStep('domain-selection');
+    setCurrentStep("domain-selection");
     setSelectedDomain(null);
     setCurrentQuestion(0);
     setUserAnswers([]);
@@ -116,17 +126,50 @@ export default function Quiz() {
       score,
       totalQuestions: selectedDomainData?.questions.length || 0,
       answers: userAnswers,
-      questions: selectedDomainData?.questions || []
+      questions: selectedDomainData?.questions || [],
     };
-    
+
     // Save quiz result
     saveQuizResult(results);
-    
+
     navigate(`/results/${type}`, { state: results });
   };
 
+  // Voice recognition for quiz answer selection
+  useEffect(() => {
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript.toLowerCase().trim();
+
+      if (selectedDomainData) {
+        const optionIndex = selectedDomainData.questions[
+          currentQuestion
+        ].options.findIndex(
+          (option) => option.toLowerCase() === transcript
+        );
+        if (optionIndex !== -1) {
+          handleAnswer(optionIndex);
+        }
+      }
+    };
+
+    recognition.start();
+
+    return () => {
+      recognition.abort();
+    };
+  }, [currentQuestion, selectedDomainData]);
+
   // Domain Selection Step
-  if (currentStep === 'domain-selection') {
+  if (currentStep === "domain-selection") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-card/30">
         <div className="container mx-auto px-4 py-8">
@@ -152,9 +195,7 @@ export default function Quiz() {
               <h1 className="text-4xl font-bold mb-4">
                 Choose Your {neuroType.name} Domain
               </h1>
-              <p className="text-xl text-muted-foreground">
-                {neuroType.description}
-              </p>
+              <p className="text-xl text-muted-foreground">{neuroType.description}</p>
             </motion.div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -167,16 +208,14 @@ export default function Quiz() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <Card 
+                  <Card
                     className="p-6 cursor-pointer hover:shadow-elevated transition-all border-2 hover:border-primary/50"
                     onClick={() => handleDomainSelect(domain.id)}
                   >
                     <div className="text-center">
                       <div className="text-4xl mb-4">{domain.icon}</div>
                       <h3 className="text-xl font-semibold mb-2">{domain.name}</h3>
-                      <p className="text-muted-foreground text-sm mb-4">
-                        {domain.description}
-                      </p>
+                      <p className="text-muted-foreground text-sm mb-4">{domain.description}</p>
                       <Badge variant="secondary" className="text-xs">
                         10 Questions
                       </Badge>
@@ -192,7 +231,7 @@ export default function Quiz() {
   }
 
   // Quiz Step
-  if (currentStep === 'quiz' && selectedDomainData) {
+  if (currentStep === "quiz" && selectedDomainData) {
     const progress = ((currentQuestion + 1) / selectedDomainData.questions.length) * 100;
     const currentQuestionData = selectedDomainData.questions[currentQuestion];
 
@@ -203,13 +242,13 @@ export default function Quiz() {
           <div className="flex items-center justify-between mb-8">
             <Button
               variant="ghost"
-              onClick={() => setCurrentStep('domain-selection')}
+              onClick={() => setCurrentStep("domain-selection")}
               className="flex items-center gap-2"
             >
               <ArrowLeft size={16} />
               Back to Domains
             </Button>
-            
+
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="flex items-center gap-1">
                 <Star size={14} />
@@ -221,8 +260,12 @@ export default function Quiz() {
           {/* Progress */}
           <div className="max-w-2xl mx-auto mb-8">
             <div className="flex justify-between text-sm text-muted-foreground mb-2">
-              <span>{selectedDomainData.name} {selectedDomainData.icon}</span>
-              <span>{currentQuestion + 1} of {selectedDomainData.questions.length}</span>
+              <span>
+                {selectedDomainData.name} {selectedDomainData.icon}
+              </span>
+              <span>
+                {currentQuestion + 1} of {selectedDomainData.questions.length}
+              </span>
             </div>
             <Progress value={progress} className="h-3" />
           </div>
@@ -237,9 +280,7 @@ export default function Quiz() {
             >
               <Card className="p-8 shadow-elevated">
                 <div className="text-center mb-8">
-                  <h2 className="text-2xl font-bold mb-4">
-                    {currentQuestionData.question}
-                  </h2>
+                  <h2 className="text-2xl font-bold mb-4">{currentQuestionData.question}</h2>
                   <p className="text-muted-foreground">
                     Select the best answer - answers will be revealed at the end!
                   </p>
@@ -289,9 +330,11 @@ export default function Quiz() {
   }
 
   // Results Step
-  if (currentStep === 'results' && selectedDomainData && quizComplete) {
+  if (currentStep === "results" && selectedDomainData && quizComplete) {
     const score = calculateScore();
-    const percentage = Math.round((score / selectedDomainData.questions.length) * 100);
+    const percentage = Math.round(
+      (score / selectedDomainData.questions.length) * 100
+    );
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-card/30">
@@ -309,22 +352,26 @@ export default function Quiz() {
             >
               <Trophy size={48} className="text-success" />
             </motion.div>
-            
             <h1 className="text-4xl font-bold mb-4">
               <span className="bg-gradient-success bg-clip-text text-transparent">
                 Quiz Complete!
               </span>
             </h1>
-            
             <p className="text-xl text-muted-foreground mb-4">
-              You scored {score} out of {selectedDomainData.questions.length} ({percentage}%)
+              You scored {score} out of {selectedDomainData.questions.length} (
+              {percentage}%)
             </p>
-            
-            <Badge 
+            <Badge
               variant={percentage >= 70 ? "default" : "secondary"}
               className="text-lg px-4 py-2"
             >
-              {percentage >= 80 ? "🌟 Excellent!" : percentage >= 70 ? "✅ Great Job!" : percentage >= 50 ? "👍 Good Effort!" : "💪 Keep Learning!"}
+              {percentage >= 80
+                ? "🌟 Excellent!"
+                : percentage >= 70
+                ? "✅ Great Job!"
+                : percentage >= 50
+                ? "👍 Good Effort!"
+                : "💪 Keep Learning!"}
             </Badge>
           </motion.div>
 
@@ -333,7 +380,7 @@ export default function Quiz() {
             {selectedDomainData.questions.map((question, index) => {
               const userAnswer = userAnswers[index];
               const isCorrect = userAnswer === question.correctAnswer;
-              
+
               return (
                 <motion.div
                   key={question.id}
@@ -341,42 +388,63 @@ export default function Quiz() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <Card className={`p-6 border-2 ${isCorrect ? 'border-success/30 bg-success/5' : 'border-destructive/30 bg-destructive/5'}`}>
+                  <Card
+                    className={`p-6 border-2 ${
+                      isCorrect
+                        ? "border-success/30 bg-success/5"
+                        : "border-destructive/30 bg-destructive/5"
+                    }`}
+                  >
                     <div className="flex items-start gap-4">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${isCorrect ? 'bg-success' : 'bg-destructive'}`}>
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${
+                          isCorrect ? "bg-success" : "bg-destructive"
+                        }`}
+                      >
                         {index + 1}
                       </div>
-                      
+
                       <div className="flex-1">
                         <h3 className="font-semibold mb-3">{question.question}</h3>
-                        
+
                         <div className="space-y-2 mb-4">
                           {question.options.map((option, optionIndex) => {
                             const isUserAnswer = optionIndex === userAnswer;
-                            const isCorrectAnswer = optionIndex === question.correctAnswer;
-                            
+                            const isCorrectAnswer =
+                              optionIndex === question.correctAnswer;
+
                             return (
                               <div
                                 key={optionIndex}
                                 className={`p-3 rounded-lg border ${
-                                  isCorrectAnswer 
-                                    ? 'border-success bg-success/10 text-success-foreground' 
-                                    : isUserAnswer 
-                                      ? 'border-destructive bg-destructive/10 text-destructive-foreground'
-                                      : 'border-muted bg-muted/30'
+                                  isCorrectAnswer
+                                    ? "border-success bg-success/10 text-success-foreground"
+                                    : isUserAnswer
+                                    ? "border-destructive bg-destructive/10 text-destructive-foreground"
+                                    : "border-muted bg-muted/30"
                                 }`}
                               >
                                 <div className="flex items-center gap-3">
-                                  <span className="font-medium">{String.fromCharCode(65 + optionIndex)}.</span>
+                                  <span className="font-medium">
+                                    {String.fromCharCode(65 + optionIndex)}.
+                                  </span>
                                   <span>{option}</span>
-                                  {isCorrectAnswer && <Badge variant="secondary" className="ml-auto">✓ Correct</Badge>}
-                                  {isUserAnswer && !isCorrectAnswer && <Badge variant="destructive" className="ml-auto">Your Answer</Badge>}
+                                  {isCorrectAnswer && (
+                                    <Badge variant="secondary" className="ml-auto">
+                                      ✓ Correct
+                                    </Badge>
+                                  )}
+                                  {isUserAnswer && !isCorrectAnswer && (
+                                    <Badge variant="destructive" className="ml-auto">
+                                      Your Answer
+                                    </Badge>
+                                  )}
                                 </div>
                               </div>
                             );
                           })}
                         </div>
-                        
+
                         {question.explanation && (
                           <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
                             <strong>Explanation:</strong> {question.explanation}
@@ -406,7 +474,7 @@ export default function Quiz() {
               <Trophy size={20} />
               Generate Professional Resume
             </Button>
-            
+
             <Button
               variant="outline"
               size="lg"
@@ -423,3 +491,4 @@ export default function Quiz() {
 
   return null;
 }
+

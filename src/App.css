@@ -1,3 +1,25 @@
+/* Title styling */
+.title {
+  font-size: 4rem; /* Big font size */
+  font-weight: 800; /* Bold */
+  color: hsl(var(--primary)); /* Use primary color from your theme */
+  margin: 1rem 0;
+  line-height: 1.2;
+  text-transform: uppercase; /* Optional */
+}
+
+@media (max-width: 768px) {
+  .title {
+    font-size: 3rem; /* Responsive for tablets */
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 2rem; /* Responsive for mobiles */
+  }
+}
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -40,3 +62,4 @@
 .read-the-docs {
   color: #888;
 }
+

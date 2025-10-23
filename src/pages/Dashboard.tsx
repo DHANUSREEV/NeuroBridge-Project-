@@ -10,32 +10,28 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log('Dashboard - Auth State:', { loading, user: !!user, profile: !!profile });
-    if (!loading && !user) {
-      console.log('Redirecting to /auth - no user found');
-      navigate('/auth', { replace: true });
+    if(!loading){
+      if(!user) {
+        navigate('/auth', {replace:true});
+      }
     }
   }, [user, loading, navigate]);
 
-  if (loading) {
+  if(loading){
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className='min-h-screen flex items-center justify-center'>
+        <Loader2 className='h-8 w-8 animate-spin'/>
       </div>
     );
   }
 
-  if (!user || !profile) {
-    return null;
+  if(!user || !profile){
+    return null;  // or you can put a fallback UI
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {profile.role === 'candidate' ? (
-        <CandidateDashboard />
-      ) : (
-        <ManagerDashboard />
-      )}
+    <div className='min-h-screen bg-background'>
+      {profile.role === 'candidate' ? <CandidateDashboard/> : <ManagerDashboard/>}
     </div>
   );
 };

@@ -1,5 +1,3 @@
-// Welcome to NeuroStrengths - Inclusive neurodivergent skills discovery platform
-
 import { useState, useEffect } from "react";
 import { HeroSection } from "@/components/HeroSection";
 import { TypeSelection } from "@/components/TypeSelection";
@@ -51,6 +49,12 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Page title */}
+      
+   <h1 className="text-6xl font-bold text-foreground text-center mt-8">
+  Welcome to NeuroBridge - Inclusive neurodivergent skills discovery platform
+</h1>
+
       {!showTypeSelection ? (
         <div>
           <div className="absolute top-4 right-4">
@@ -58,7 +62,13 @@ const Index = () => {
               Sign In / Register
             </Button>
           </div>
+
+          {/* Main hero section */}
           <HeroSection onGetStarted={handleGetStarted} />
+
+          {/* Optional page heading */}
+          <div className="text-center mt-8">
+          </div>
         </div>
       ) : (
         <div className="min-h-screen py-12 bg-gradient-to-br from-background via-card/20 to-background">
